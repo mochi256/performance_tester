@@ -2,7 +2,11 @@
 name = "performance_tester_client"
 version = "0.1.0"
 edition = "2021"
+authors = ["mochi256 <contact@mochi256.com>"]
+description = "execute performance test by rust, using tcp-server and tcp-client"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+clap = { version = "3.1.12", features = ["derive"] }
+chrono = "0.4.19"

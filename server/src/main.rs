@@ -18,20 +18,20 @@ struct Args {
 }
 
 fn info(msg: String) {
-    let now = Local::now().format("%Y-%m-%d_%H:%M:%S");
+    let now = Local::now().format("%Y-%m-%d_%H:%M:%S.%Z");
     let log = format!("[{0}] [INFO] {1}", now, msg);
     println!("{}", log);
 }
 
 fn error(msg: String) {
-    let now = Local::now().format("%Y-%m-%d_%H:%M:%S");
+    let now = Local::now().format("%Y-%m-%d_%H:%M:%S.%Z");
     let log = format!("[{0}] [ERROR] {1}", now, msg);
     eprintln!("{}", log);
 }
 
 fn handle_connection(stream: (TcpStream, SocketAddr), count: u64) {
     let mut tcp_stream: TcpStream = stream.0;
-    let send_string = format!("{}\r\n", count.to_string());
+    let send_string = format!("{}", count.to_string());
     let send_bytes = send_string.as_bytes();
     match tcp_stream.write(&send_bytes[..send_bytes.len()]) {
         Result::Ok(_) => {
@@ -58,7 +58,6 @@ fn main() {
 
     let current_count = Mutex::new(0);
     loop {
-
         let stream = listener.accept();
         if let Err(e) = stream {
             error(e.to_string());
@@ -70,12 +69,12 @@ fn main() {
         let mut _current_count = current_count.lock().unwrap();
         *_current_count += 1;
         let count = _current_count.clone();
+        if count > args.count {
+            break;
+        }
         thread::spawn(move || {
             handle_connection(_streams, count);
         });
-        if count >= args.count {
-            break;
-        }
-        
     }
+    info(format!("server_terminated."));
 }

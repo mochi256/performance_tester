@@ -9,5 +9,4 @@ description = "execute performance test by rust, using tcp-server and tcp-client
 
 [dependencies]
 clap = { version = "3.1.12", features = ["derive"] }
-regex = "1.5.5"
 chrono = "0.4.19"
