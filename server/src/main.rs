@@ -1,11 +1,10 @@
 use clap::Parser;
 use std::sync::Mutex;
-use chrono::Local;
 use std::io::{Write};
 use std::net::TcpListener;
-use std::net::{TcpStream, SocketAddr};
+use std::net::TcpStream;
 use std::thread;
-
+use logger::logging;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -17,29 +16,21 @@ struct Args {
     count: u64,
 }
 
-fn info(msg: String) {
-    let now = Local::now().format("%Y-%m-%d_%H:%M:%S.%Z");
-    let log = format!("[{0}] [INFO] {1}", now, msg);
-    println!("{}", log);
+fn handle_close(tcp_stream: TcpStream) {
+    tcp_stream.shutdown(std::net::Shutdown::Both).unwrap();
 }
 
-fn error(msg: String) {
-    let now = Local::now().format("%Y-%m-%d_%H:%M:%S.%Z");
-    let log = format!("[{0}] [ERROR] {1}", now, msg);
-    eprintln!("{}", log);
-}
-
-fn handle_connection(stream: (TcpStream, SocketAddr), count: u64) {
-    let mut tcp_stream: TcpStream = stream.0;
-    let send_string = format!("{}", count.to_string());
+fn handle_connection(mut tcp_stream: TcpStream, count: u64) {
+    let send_string = format!("{}\r\n", count.to_string());
     let send_bytes = send_string.as_bytes();
     match tcp_stream.write(&send_bytes[..send_bytes.len()]) {
         Result::Ok(_) => {
-            info(format!("response: {}", count));
-            tcp_stream.shutdown(std::net::Shutdown::Both).unwrap();
+            tcp_stream.flush().unwrap();
+            logging::info(format!("send: {}", count));
         },
         Result::Err(e) => {
-            error(e.to_string());
+            handle_close(tcp_stream);
+            logging::error(e.to_string());
         }
     }
 }
@@ -50,18 +41,17 @@ fn main() {
     let _result = TcpListener::bind(&addr);
 
     if let Err(e) = _result {
-        error(format!("bind error: {}", &e));
+        logging::error(format!("bind error: {}", &e));
         return;
     }
     let listener = _result.unwrap();
-    info(format!("server_start {}", &addr));
+    logging::info(format!("server_start {}", &addr));
 
     let current_count = Mutex::new(0);
-    loop {
-        let stream = listener.accept();
+    for stream in listener.incoming() {
         if let Err(e) = stream {
-            error(e.to_string());
-            continue;
+            logging::error(e.to_string());
+            break;
         }
 
         let _streams = stream.unwrap();
@@ -70,11 +60,12 @@ fn main() {
         *_current_count += 1;
         let count = _current_count.clone();
         if count > args.count {
+            handle_close(_streams);
             break;
         }
         thread::spawn(move || {
             handle_connection(_streams, count);
         });
     }
-    info(format!("server_terminated."));
+    logging::info(format!("server_terminated."));
 }
