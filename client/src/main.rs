@@ -37,14 +37,14 @@ fn main() {
 
     logging::info(format!("client_start {}", &addr));
     loop {
-        let stream = TcpStream::connect_timeout(&addr, Duration::from_secs(10));
+        let stream = TcpStream::connect_timeout(&addr, Duration::from_secs(30));
         if let Err(e) = stream {
             logging::error(format!("connection error: {}", &e));
             break;
         }
         let mut _stream = stream.unwrap();
 
-        let result = _stream.set_read_timeout(Some(Duration::from_secs(5)));
+        let result = _stream.set_read_timeout(Some(Duration::from_secs(30)));
         if let Err(e) = result {
             logging::error(format!("connection error: {}", &e));
             break;
