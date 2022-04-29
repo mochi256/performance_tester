@@ -61,27 +61,28 @@ fn main() {
                 }
                 let _recv = recv.unwrap();
                 
-                let number_re = Regex::new(r"^(\d+)").unwrap();
-                let number_caps = number_re.captures(_recv);
-                if let None = number_caps {
-                    logging::error(format!("number not found."));
+                let jobs_re = Regex::new(r"^jobs:[0-9,]+").unwrap();
+                let jobs_cap = jobs_re.find(_recv);
+                if let None = jobs_cap {
+                    logging::error(format!("jobs not found."));
                     break;
                 }
-                let _number_caps = number_caps.unwrap();
+                let numbers_re = Regex::new(r"([0-9]+)").unwrap();
+                for number_cap in numbers_re.captures_iter(_recv) {
+                    let raw_number = &number_cap[0];
+                    let number = raw_number.parse::<u64>();
+                    if let Err(err) = number {
+                        logging::error(err.to_string());
+                        break;
+                    }
+                    let _number = number.unwrap();
 
-                let raw_number = &_number_caps[0];
-                let number = raw_number.parse::<u64>();
-                if let Err(err) = number {
-                    logging::error(err.to_string());
-                    break;
+                    let output = match is_prime(_number) {
+                        true => format!("{}_is_prime", raw_number),
+                        false => format!("{}_is_not_prime", raw_number)
+                    };
+                    logging::info(output);
                 }
-                let _number = number.unwrap();
-
-                let output = match is_prime(_number) {
-                    true => format!("{}_is_prime", raw_number),
-                    false => format!("{}_is_not_prime", raw_number)
-                };
-                logging::info(output);
             },
             Result::Err(e) => {
                 logging::error(e.to_string());
