@@ -14,6 +14,9 @@ struct Args {
 
     #[clap(short, long, default_value_t = 8000)]
     port: u64,
+
+    #[clap(short, long, default_value_t = 15)]
+    timeout: u64,
 }
 
 fn is_prime(num: u64)->bool {
@@ -37,14 +40,18 @@ fn main() {
 
     logging::info(format!("client_start {}", &addr));
     loop {
-        let stream = TcpStream::connect_timeout(&addr, Duration::from_secs(30));
+        let stream = TcpStream::connect_timeout(
+            &addr, Duration::from_secs(args.timeout)
+        );
         if let Err(e) = stream {
             logging::error(format!("connection error: {}", &e));
             break;
         }
         let mut _stream = stream.unwrap();
 
-        let result = _stream.set_read_timeout(Some(Duration::from_secs(30)));
+        let result = _stream.set_read_timeout(
+            Some(Duration::from_secs(args.timeout))
+        );
         if let Err(e) = result {
             logging::error(format!("connection error: {}", &e));
             break;
