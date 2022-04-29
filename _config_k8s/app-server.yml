@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-server
+  labels:
+    app: app-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-server
+  template:
+    metadata:
+      labels:
+        app: app-server
+    spec:
+      containers:
+      - name: app-server
+        image: mochi256/performance_tester:latest
+        tty: true
+        command:
+          - sh
+          - -c
+          - "performance_tester_server -c 2500000 -r 10000 -p 8000"
+        ports:
+        - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-server
+spec:
+  type: ClusterIP
+  externalIPs:
+    - 192.168.0.250
+  ports:
+    - name: "http-port"
+      protocol: "TCP"
+      port: 8000
+      targetPort: 8000
+  selector:
+    app: app-server
