@@ -13,6 +13,7 @@ spec:
     metadata:
       labels:
         app: app-server
+    restartPolicy: Never
     spec:
       containers:
       - name: app-server
