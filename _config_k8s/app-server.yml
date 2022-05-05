@@ -13,7 +13,7 @@ spec:
     command:
       - sh
       - -c
-      - "performance_tester_server -c 1000000 -r 10000 -p 8000"
+      - "performance_tester_server -c 1000000 -r 1000 -p 8000"
     ports:
     - containerPort: 8000
 ---
